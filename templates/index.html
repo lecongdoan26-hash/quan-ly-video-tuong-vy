@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Kho & Quản Lý Video - Tường Vy Admin</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        admin: {
+                            50: '#faf5ff',
+                            100: '#f3e8ff',
+                            500: '#a855f7',
+                            600: '#9333ea',
+                            700: '#7e22ce',
+                            900: '#581c87',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/custom.css">
+</head>
+<body class="min-h-screen bg-slate-100 flex flex-col text-slate-800 relative">
+
+    <!-- ==================== MÀN HÌNH KHÓA ĐĂNG NHẬP BẮT BUỘC ==================== -->
+    <div id="login-overlay" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden border border-slate-200">
+            <!-- Header Login -->
+            <div class="px-8 pt-8 pb-6 text-center bg-gradient-to-b from-purple-50 to-white">
+                <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-600 text-white flex items-center justify-center mx-auto mb-3 shadow-xl shadow-purple-500/25 text-2xl">
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+                <h2 class="text-xl font-black text-slate-900">ĐĂNG NHẬP BẢO MẬT</h2>
+                <p class="text-xs text-slate-500 mt-1">Hệ Thống Kho & Quản Lý Video Công Ty</p>
+            </div>
+
+            <!-- Login Form -->
+            <form onsubmit="handleUserLogin(event)" class="px-8 pb-8 space-y-4">
+                <!-- Chọn Tài Khoản -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-800 mb-1.5">
+                        <i class="fa-solid fa-user-circle text-purple-600 mr-1"></i> Chọn Tài Khoản Của Bạn:
+                    </label>
+                    <select id="login-user-select" required class="w-full px-4 py-3 rounded-2xl border-2 border-slate-200 text-xs font-bold text-slate-800 bg-slate-50 focus:bg-white focus:outline-none focus:border-purple-600 transition-all">
+                        <option value="">-- Đang tải danh sách người dùng... --</option>
+                    </select>
+                </div>
+
+                <!-- Nhập Mã PIN -->
+                <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="block text-xs font-bold text-slate-800">
+                            <i class="fa-solid fa-key text-purple-600 mr-1"></i> Nhập Mã PIN Bí Mật:
+                        </label>
+                        <button type="button" onclick="togglePinVisibility()" class="text-[11px] text-purple-600 hover:underline font-semibold">
+                            <span id="pin-toggle-text">Hiện số</span>
+                        </button>
+                    </div>
+                    <div class="relative">
+                        <input id="login-pin-input" type="password" required placeholder="Nhập mã PIN của bạn..." 
+                            class="w-full px-4 py-3 rounded-2xl border-2 border-slate-200 text-sm font-black text-slate-900 bg-slate-50 focus:bg-white focus:outline-none focus:border-purple-600 transition-all tracking-wider text-center">
+                    </div>
+                </div>
+
+                <!-- Error Message Banner -->
+                <div id="login-error-msg" class="hidden text-xs font-bold text-rose-600 bg-rose-50 border border-rose-200 p-3 rounded-xl flex items-center gap-2">
+                    <i class="fa-solid fa-circle-exclamation text-base"></i>
+                    <span id="login-error-text">Mã PIN không chính xác!</span>
+                </div>
+
+                <!-- Submit Button -->
+                <button id="btn-login-submit" type="submit" class="w-full py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-2xl font-black text-xs shadow-lg shadow-purple-500/30 transition-all transform hover:-translate-y-0.5">
+                    ĐĂNG NHẬP VÀO PHẦN MỀM <i class="fa-solid fa-arrow-right ml-1"></i>
+                </button>
+
+                <!-- Help Notice -->
+                <div class="pt-2 text-center text-[11px] text-slate-400 space-y-1">
+                    <p><i class="fa-solid fa-shield-halved text-purple-500 mr-1"></i> Mã PIN do Quản trị viên <strong>Tường Vy</strong> cấp riêng.</p>
+                    <p class="text-[10px] text-slate-400">Nếu bạn chưa có mã PIN hoặc quên, vui lòng liên hệ Tường Vy.</p>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Top Navigation Bar - FULL WIDTH -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm w-full">
+        <div class="w-full px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-3">
+            <!-- Brand & Title -->
+            <div class="flex items-center gap-3">
+                <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-purple-600 via-indigo-600 to-blue-600 flex items-center justify-center text-white shadow-md shadow-purple-500/20">
+                    <i class="fa-solid fa-crown text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-black text-slate-900 tracking-tight flex items-center gap-2">
+                        KHO & QUẢN LÝ VIDEO
+                        <span id="role-header-pill" class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-700">Tường Vy Admin</span>
+                    </h1>
+                    <p class="text-xs text-slate-500">Phân quyền bảo mật: Tường Vy Admin • Nhân viên dựng • Sếp xem video</p>
+                </div>
+            </div>
+
+            <!-- LAN Link for Boss Sharing -->
+            <div class="hidden xl:flex items-center gap-2 bg-slate-100 px-3.5 py-1.5 rounded-xl border border-slate-200">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 pulse-subtle"></span>
+                <span class="text-xs font-semibold text-slate-600">Link Sếp xem (Mạng LAN):</span>
+                <code class="text-xs font-mono font-bold text-blue-700">http://{{ local_ip }}:8000</code>
+                <button onclick="copyLanLink('http://{{ local_ip }}:8000')" class="text-slate-500 hover:text-blue-700 text-xs p-1" title="Sao chép link gửi cho Sếp">
+                    <i class="fa-regular fa-copy"></i>
+                </button>
+            </div>
+
+            <!-- User Profile & Action Buttons -->
+            <div class="flex items-center gap-2.5">
+                <!-- User Active Pill -->
+                <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl">
+                    <div id="user-avatar-badge" class="w-7 h-7 rounded-lg bg-purple-600 text-white flex items-center justify-center font-bold text-xs shadow-sm">
+                        <i class="fa-solid fa-crown text-[11px]"></i>
+                    </div>
+                    <div class="text-left">
+                        <div id="current-user-name" class="text-xs font-black text-slate-900 leading-none">Tường Vy</div>
+                        <div id="current-user-role-label" class="text-[10px] text-purple-700 font-bold mt-0.5">Quản trị tối cao</div>
+                    </div>
+                </div>
+
+                <!-- Admin Staff Management (Only visible to Tường Vy) -->
+                <button id="btn-admin-members" onclick="openMembersModal()" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 transition-all shadow-sm">
+                    <i class="fa-solid fa-users-gear"></i>
+                    <span class="hidden sm:inline">Quản Lý Nhân Sự & PIN</span>
+                </button>
+
+                <!-- Export Excel -->
+                <button onclick="exportExcel()" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 transition-all shadow-sm">
+                    <i class="fa-solid fa-file-excel text-emerald-600"></i>
+                    <span class="hidden sm:inline">Xuất Excel</span>
+                </button>
+
+                <!-- Add Video (Hidden for Sếp) -->
+                <button id="btn-add-video" onclick="openCreateModal()" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black text-white bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-500/25 transition-all">
+                    <i class="fa-solid fa-plus text-sm"></i>
+                    <span>Thêm Video Mới</span>
+                </button>
+
+                <!-- Logout Button -->
+                <button onclick="handleLogout()" class="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all" title="Đăng Xuất Khỏi Hệ Thống">
+                    <i class="fa-solid fa-arrow-right-from-bracket text-sm"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- SẾP NOTIFICATION BANNER (Hiển thị khi đăng nhập là Sếp) -->
+    <div id="banner-boss-notice" class="w-full bg-blue-900 text-white px-6 py-2.5 text-xs flex items-center justify-between shadow-inner hidden">
+        <div class="flex items-center gap-2.5">
+            <span class="px-2 py-0.5 rounded-full bg-emerald-500 text-white font-bold text-[10px] uppercase">Chế độ Sếp</span>
+            <span class="font-medium">Chào Sếp! Bạn đang ở chế độ <strong>Xem Video</strong>. Mọi quyền chỉnh sửa, thêm và xóa đã được bảo vệ tuyệt đối.</span>
+        </div>
+        <button onclick="handleLogout()" class="text-blue-200 hover:text-white underline text-xs font-bold">
+            Đăng xuất
+        </button>
+    </div>
+
+    <!-- Main Container - FULL SCREEN FLUID WIDTH -->
+    <main class="w-full px-4 sm:px-6 lg:px-8 py-5 flex-1 space-y-5">
+
+        <!-- Top Overview Stats (KPI Bar) -->
+        <section class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-5 gap-3.5">
+            <!-- 1. Kho lưu trữ (Chưa đăng) -->
+            <div onclick="switchTab('archive')" class="cursor-pointer bg-white p-4 rounded-2xl border border-amber-200 shadow-sm hover:shadow-md hover:border-amber-400 transition-all flex items-center gap-3.5">
+                <div class="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 text-xl font-bold">
+                    <i class="fa-solid fa-box-archive"></i>
+                </div>
+                <div>
+                    <div class="text-xs font-bold text-amber-700">KHO LƯU TRỮ</div>
+                    <div id="stat-archive" class="text-2xl font-black text-amber-700 leading-tight">0</div>
+                    <div class="text-[11px] text-slate-500">Video chưa đăng</div>
+                </div>
+            </div>
+
+            <!-- 2. Đã đăng TikTok -->
+            <div onclick="switchTab('tiktok')" class="cursor-pointer bg-white p-4 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-slate-800 transition-all flex items-center gap-3.5">
+                <div class="w-12 h-12 rounded-xl bg-slate-900 flex items-center justify-center text-white text-xl font-bold">
+                    <i class="fa-brands fa-tiktok"></i>
+                </div>
+                <div>
+                    <div class="text-xs font-bold text-slate-900">KÊNH TIKTOK</div>
+                    <div id="badge-tab-tiktok" class="text-2xl font-black text-slate-900 leading-tight">0</div>
+                    <div class="text-[11px] text-slate-500">Video đã lên kênh</div>
+                </div>
+            </div>
+
+            <!-- 3. Đã đăng Facebook -->
+            <div onclick="switchTab('facebook')" class="cursor-pointer bg-white p-4 rounded-2xl border border-blue-200 shadow-sm hover:shadow-md hover:border-blue-500 transition-all flex items-center gap-3.5">
+                <div class="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 text-xl font-bold">
+                    <i class="fa-brands fa-facebook"></i>
+                </div>
+                <div>
+                    <div class="text-xs font-bold text-blue-700">KÊNH FACEBOOK</div>
+                    <div id="badge-tab-facebook" class="text-2xl font-black text-blue-700 leading-tight">0</div>
+                    <div class="text-[11px] text-slate-500">Video đã lên Reels/Page</div>
+                </div>
+            </div>
+
+            <!-- 4. Đã đăng YouTube -->
+            <div onclick="switchTab('youtube')" class="cursor-pointer bg-white p-4 rounded-2xl border border-red-200 shadow-sm hover:shadow-md hover:border-red-500 transition-all flex items-center gap-3.5">
+                <div class="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center text-red-600 text-xl font-bold">
+                    <i class="fa-brands fa-youtube"></i>
+                </div>
+                <div>
+                    <div class="text-xs font-bold text-red-700">KÊNH YOUTUBE</div>
+                    <div id="badge-tab-youtube" class="text-2xl font-black text-red-700 leading-tight">0</div>
+                    <div class="text-[11px] text-slate-500">Video đã lên Shorts</div>
+                </div>
+            </div>
+
+            <!-- 5. Tổng Video & Hôm nay -->
+            <div onclick="switchTab('all')" class="cursor-pointer bg-white p-4 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-blue-400 transition-all flex items-center gap-3.5 col-span-2 md:col-span-1">
+                <div class="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-slate-700 text-xl font-bold">
+                    <i class="fa-solid fa-clapperboard"></i>
+                </div>
+                <div>
+                    <div class="text-xs font-bold text-slate-600">TỔNG VIDEO</div>
+                    <div class="flex items-baseline gap-2">
+                        <span id="stat-total-videos" class="text-2xl font-black text-slate-900 leading-tight">0</span>
+                        <span class="text-xs font-semibold text-emerald-600">(<span id="stat-today-videos">0</span> mới hôm nay)</span>
+                    </div>
+                    <div class="text-[11px] text-slate-400">Xem tất cả mục</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CATEGORY TABS & FILTER TOOLBAR -->
+        <section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <!-- Main Tabs Header -->
+            <div class="flex items-center overflow-x-auto border-b border-slate-200 bg-slate-50/80 px-2">
+                <!-- Tab: Kho lưu trữ (Chưa đăng) -->
+                <button id="tab-archive" onclick="switchTab('archive')" class="flex items-center gap-2 px-5 py-3.5 border-b-2 border-blue-600 font-bold text-sm text-blue-600 bg-blue-50/50 transition-all whitespace-nowrap">
+                    <i class="fa-solid fa-box-archive text-amber-500"></i>
+                    <span>KHO LƯU TRỮ (CHƯA ĐĂNG)</span>
+                    <span id="badge-tab-archive" class="ml-1 px-2 py-0.5 rounded-full text-xs font-black bg-amber-100 text-amber-800">0</span>
+                </button>
+
+                <!-- Tab: Kênh TikTok -->
+                <button id="tab-tiktok" onclick="switchTab('tiktok')" class="flex items-center gap-2 px-5 py-3.5 border-b-2 border-transparent font-medium text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all whitespace-nowrap">
+                    <i class="fa-brands fa-tiktok text-slate-800"></i>
+                    <span>KÊNH TIKTOK</span>
+                    <span id="badge-tab-tiktok" class="ml-1 px-2 py-0.5 rounded-full text-xs font-bold bg-slate-200 text-slate-800">0</span>
+                </button>
+
+                <!-- Tab: Kênh Facebook -->
+                <button id="tab-facebook" onclick="switchTab('facebook')" class="flex items-center gap-2 px-5 py-3.5 border-b-2 border-transparent font-medium text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all whitespace-nowrap">
+                    <i class="fa-brands fa-facebook text-blue-600"></i>
+                    <span>KÊNH FACEBOOK</span>
+                    <span id="badge-tab-facebook" class="ml-1 px-2 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800">0</span>
+                </button>
+
+                <!-- Tab: Kênh YouTube -->
+                <button id="tab-youtube" onclick="switchTab('youtube')" class="flex items-center gap-2 px-5 py-3.5 border-b-2 border-transparent font-medium text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all whitespace-nowrap">
+                    <i class="fa-brands fa-youtube text-red-600"></i>
+                    <span>KÊNH YOUTUBE</span>
+                    <span id="badge-tab-youtube" class="ml-1 px-2 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-800">0</span>
+                </button>
+
+                <!-- Tab: Tất cả -->
+                <button id="tab-all" onclick="switchTab('all')" class="flex items-center gap-2 px-5 py-3.5 border-b-2 border-transparent font-medium text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all whitespace-nowrap">
+                    <i class="fa-solid fa-list-ul text-slate-500"></i>
+                    <span>TẤT CẢ VIDEO</span>
+                    <span id="badge-tab-all" class="ml-1 px-2 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-600">0</span>
+                </button>
+            </div>
+
+            <!-- Filter Controls -->
+            <div class="p-4 space-y-3">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <!-- Title & Counter -->
+                    <div class="flex items-center gap-2">
+                        <h2 id="current-tab-title" class="font-black text-sm text-slate-900 tracking-wide uppercase">
+                            📁 KHO LƯU TRỮ (CÁC VIDEO CHƯA ĐĂNG)
+                        </h2>
+                        <span id="video-count-badge" class="text-xs font-bold px-2.5 py-0.5 rounded-lg bg-blue-50 text-blue-700">0 video</span>
+                    </div>
+
+                    <!-- Search & Editor Filter -->
+                    <div class="flex flex-wrap items-center gap-2.5">
+                        <div class="relative w-64">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                            <input id="filter-search" type="text" placeholder="Tìm kiếm tiêu đề video..." 
+                                class="w-full pl-8 pr-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
+                        </div>
+
+                        <div>
+                            <select id="filter-creator" onchange="loadVideos()" 
+                                class="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-semibold text-slate-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                                <option value="all">Tất cả người dựng</option>
+                            </select>
+                        </div>
+
+                        <!-- View Switcher -->
+                        <div class="bg-slate-100 p-0.5 rounded-xl flex items-center gap-1 border border-slate-200">
+                            <button id="btn-view-table" onclick="setView('table')" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-white shadow-sm text-blue-600">
+                                <i class="fa-solid fa-table-list mr-1"></i> Bảng
+                            </button>
+                            <button id="btn-view-grid" onclick="setView('grid')" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900">
+                                <i class="fa-solid fa-grip mr-1"></i> Thẻ
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Date Range Pills -->
+                <div class="flex flex-wrap items-center justify-between gap-3 pt-2.5 border-t border-slate-100">
+                    <div class="flex flex-wrap items-center gap-1.5">
+                        <span class="text-xs text-slate-500 font-semibold mr-1"><i class="fa-regular fa-calendar mr-1"></i>Ngày làm:</span>
+                        <button onclick="setDateFilter('today')" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700">Hôm nay</button>
+                        <button onclick="setDateFilter('yesterday')" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700">Hôm qua</button>
+                        <button onclick="setDateFilter('7days')" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700">7 ngày qua</button>
+                        <button onclick="setDateFilter('this_month')" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700">Tháng này</button>
+                        <button onclick="setDateFilter('all')" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700">Tất cả</button>
+                        
+                        <div class="flex items-center gap-1.5 ml-2">
+                            <input id="filter-date-from" type="date" onchange="loadVideos()" class="px-2 py-1 rounded-lg border border-slate-200 text-xs bg-slate-50 text-slate-700">
+                            <span class="text-slate-400 text-xs">đến</span>
+                            <input id="filter-date-to" type="date" onchange="loadVideos()" class="px-2 py-1 rounded-lg border border-slate-200 text-xs bg-slate-50 text-slate-700">
+                        </div>
+
+                        <button onclick="resetFilters()" class="text-xs text-blue-600 hover:underline ml-2 font-medium">
+                            <i class="fa-solid fa-rotate-left mr-0.5"></i> Đặt lại
+                        </button>
+                    </div>
+
+                    <div id="role-hint-text" class="text-[11px] text-slate-400 italic">
+                        * Tường Vy có toàn quyền quản trị, cấp mã PIN và xóa video
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW 1: TABLE VIEW (FULL WIDTH SPREAD) -->
+        <section id="table-view-container" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden w-full">
+            <div class="overflow-x-auto w-full">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 text-xs font-bold uppercase tracking-wider">
+                            <th class="px-5 py-3.5 text-center w-14">STT</th>
+                            <th class="px-5 py-3.5 w-36">Ngày Làm</th>
+                            <th class="px-5 py-3.5 min-w-[280px]">Tiêu Đề Video</th>
+                            <th class="px-5 py-3.5 w-48">Người Làm (Editor)</th>
+                            <th class="px-5 py-3.5 w-36">Trạng Thái</th>
+                            <th class="px-5 py-3.5 min-w-[280px]">Kênh Đã Đăng</th>
+                            <th class="px-5 py-3.5 text-center w-36">Xem Video</th>
+                            <th id="th-actions" class="px-5 py-3.5 text-right w-24">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="videos-table-body" class="divide-y divide-slate-100">
+                        <!-- Dynamic rows loaded via app.js -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- VIEW 2: GRID VIEW (FULL WIDTH CARDS) -->
+        <section id="grid-view-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5 hidden w-full">
+            <!-- Dynamic cards loaded via app.js -->
+        </section>
+
+        <!-- EMPTY STATE -->
+        <div id="empty-state" class="hidden text-center py-16 bg-white rounded-2xl border border-slate-200 w-full">
+            <div class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3 text-2xl">
+                <i class="fa-solid fa-box-open"></i>
+            </div>
+            <h3 class="text-base font-bold text-slate-800">Không có video nào trong mục này</h3>
+            <p class="text-xs text-slate-500 mt-1">Bấm nút "Thêm Video Mới" bên trên để tải video vào mục này.</p>
+            <button onclick="resetFilters()" class="mt-4 px-4 py-2 rounded-xl text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100">
+                Xóa bộ lọc tìm kiếm
+            </button>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-3.5 mt-8 w-full">
+        <div class="w-full px-6 text-center text-xs text-slate-400 font-medium">
+            Hệ thống Quản lý Video • Thiết kế riêng cho Tường Vy Quản Trị • Phân Quyền Bảo Mật Bằng Mã PIN
+        </div>
+    </footer>
+
+    <!-- ==================== MODALS ==================== -->
+
+    <!-- 1. VIDEO PLAYER MODAL (THEATER SCREEN FOR BOSS & TEAM) -->
+    <div id="modal-player" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 hidden">
+        <div class="bg-white w-full max-w-6xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[94vh]">
+            <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-950 text-white">
+                <div class="flex items-center gap-3 pr-4">
+                    <span class="w-3 h-3 rounded-full bg-red-500"></span>
+                    <h3 id="player-modal-title" class="font-extrabold text-base truncate">Tiêu đề video</h3>
+                </div>
+                <button onclick="closeVideoPlayer()" class="text-slate-400 hover:text-white text-xl p-1">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto grid grid-cols-1 lg:grid-cols-12 gap-0 bg-black">
+                <!-- Video Screen -->
+                <div class="lg:col-span-8 flex items-center justify-center bg-black p-3 min-h-[380px] lg:min-h-[520px]">
+                    <video id="main-video-player" controls autoplay class="max-h-[520px] w-auto max-w-full rounded-xl shadow-2xl">
+                        <source src="" type="video/mp4">
+                        Trình duyệt không hỗ trợ phát video.
+                    </video>
+                    <div id="player-no-video" class="hidden text-center text-slate-400 p-8">
+                        <i class="fa-solid fa-video-slash text-5xl mb-3 text-slate-600"></i>
+                        <p class="text-base font-bold">Chưa có file video nào được tải lên</p>
+                    </div>
+                </div>
+
+                <!-- Info & Channel Controls -->
+                <div class="lg:col-span-4 bg-white p-6 flex flex-col justify-between overflow-y-auto border-l border-slate-200">
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <span id="player-status-badge"></span>
+                            <span class="text-xs text-slate-400"><i class="fa-regular fa-clock mr-1"></i><span id="player-created-date"></span></span>
+                        </div>
+
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 text-xs space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-slate-500 font-semibold">Người dựng (Editor):</span>
+                                <span id="player-creator" class="font-black text-blue-700 text-sm"></span>
+                            </div>
+                        </div>
+
+                        <div id="player-description" class="text-xs text-slate-600 bg-slate-50 p-3.5 rounded-xl border border-slate-100 hidden"></div>
+
+                        <!-- Channel Marking Buttons (Chỉ hiện cho Tường Vy và Editor; Ẩn với Sếp) -->
+                        <div id="player-controls-container" class="space-y-2 pt-2 border-t border-slate-200">
+                            <label class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                                <i class="fa-solid fa-share-nodes text-blue-600"></i>
+                                <span>Đánh dấu kênh đã đăng (Bấm để bật/tắt):</span>
+                            </label>
+                            
+                            <div class="flex flex-col gap-2">
+                                <button id="player-btn-tiktok" onclick="playerToggleChannel('tiktok')" class="w-full py-2.5 px-4 rounded-xl text-xs font-bold flex items-center justify-between transition-all">
+                                    <span><i class="fa-brands fa-tiktok mr-2"></i> Kênh TikTok</span>
+                                    <span class="text-xs">Chưa đăng</span>
+                                </button>
+                                <button id="player-btn-facebook" onclick="playerToggleChannel('facebook')" class="w-full py-2.5 px-4 rounded-xl text-xs font-bold flex items-center justify-between transition-all">
+                                    <span><i class="fa-brands fa-facebook mr-2"></i> Kênh Facebook</span>
+                                    <span class="text-xs">Chưa đăng</span>
+                                </button>
+                                <button id="player-btn-youtube" onclick="playerToggleChannel('youtube')" class="w-full py-2.5 px-4 rounded-xl text-xs font-bold flex items-center justify-between transition-all">
+                                    <span><i class="fa-brands fa-youtube mr-2"></i> Kênh YouTube</span>
+                                    <span class="text-xs">Chưa đăng</span>
+                                </button>
+                            </div>
+
+                            <button onclick="playerMoveToArchive()" class="w-full mt-2 py-2 px-3 rounded-xl text-xs font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-200 transition-colors flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-box-archive text-amber-600"></i>
+                                <span>Chuyển về Kho Lưu Trữ (Bỏ đăng tất cả)</span>
+                            </button>
+                        </div>
+
+                        <!-- View only notice for Sếp in player -->
+                        <div id="player-boss-view-notice" class="bg-blue-50 border border-blue-200 text-blue-900 p-3 rounded-xl text-xs font-semibold hidden">
+                            <i class="fa-solid fa-circle-info text-blue-600 mr-1"></i> Sếp đang xem video ở chế độ Thưởng Thức.
+                        </div>
+                    </div>
+
+                    <div class="pt-4 border-t border-slate-200 mt-4 flex items-center justify-between">
+                        <a id="player-download-btn" href="#" download class="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1.5">
+                            <i class="fa-solid fa-download"></i> Tải video về máy
+                        </a>
+                        <button onclick="closeVideoPlayer()" class="text-xs font-semibold text-slate-500 hover:text-slate-800">
+                            Đóng
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. CREATE / EDIT VIDEO MODAL -->
+    <div id="modal-video" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+            <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+                <h3 id="modal-title" class="font-black text-base text-slate-900">Thêm Video Mới</h3>
+                <button onclick="closeVideoModal()" class="text-slate-400 hover:text-slate-700 text-lg p-1">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form id="video-form" onsubmit="submitVideoForm(event)" class="p-6 space-y-4 overflow-y-auto">
+                <input type="hidden" id="form-video-id" name="video_id" value="">
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-800 mb-1">Tiêu Đề Video <span class="text-red-500">*</span></label>
+                    <input id="form-title" name="title" type="text" required placeholder="Nhập tiêu đề hoặc chủ đề video..." 
+                        class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-800 mb-1">Người Làm (Editor / Quay Dựng) <span class="text-red-500">*</span></label>
+                        <select id="form-creator" name="creator" required 
+                            class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-800 mb-1">Ngày Làm <span class="text-red-500">*</span></label>
+                        <input id="form-created-date" name="created_date" type="date" required 
+                            class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Mô Tả / Nội Dung Tóm Tắt</label>
+                    <textarea id="form-desc" name="description" rows="2" placeholder="Ghi chú nội dung kịch bản hoặc cảnh quay..." 
+                        class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"></textarea>
+                </div>
+
+                <div class="space-y-2 pt-2 border-t border-slate-100">
+                    <label class="block text-xs font-bold text-slate-900">
+                        <i class="fa-solid fa-list-check text-blue-600 mr-1"></i> Phân loại trạng thái & Kênh đăng:
+                    </label>
+                    
+                    <div class="grid grid-cols-3 gap-3">
+                        <label class="flex items-center gap-2 p-3 rounded-xl border border-slate-200 bg-slate-50 cursor-pointer hover:bg-slate-100 transition-colors">
+                            <input type="checkbox" id="check-tiktok" onchange="onChannelCheckboxChange()" class="w-4 h-4 rounded text-blue-600">
+                            <span class="text-xs font-bold text-slate-800"><i class="fa-brands fa-tiktok mr-1"></i> TikTok</span>
+                        </label>
+
+                        <label class="flex items-center gap-2 p-3 rounded-xl border border-slate-200 bg-slate-50 cursor-pointer hover:bg-slate-100 transition-colors">
+                            <input type="checkbox" id="check-facebook" onchange="onChannelCheckboxChange()" class="w-4 h-4 rounded text-blue-600">
+                            <span class="text-xs font-bold text-blue-700"><i class="fa-brands fa-facebook mr-1"></i> Facebook</span>
+                        </label>
+
+                        <label class="flex items-center gap-2 p-3 rounded-xl border border-slate-200 bg-slate-50 cursor-pointer hover:bg-slate-100 transition-colors">
+                            <input type="checkbox" id="check-youtube" onchange="onChannelCheckboxChange()" class="w-4 h-4 rounded text-blue-600">
+                            <span class="text-xs font-bold text-red-700"><i class="fa-brands fa-youtube mr-1"></i> YouTube</span>
+                        </label>
+                    </div>
+
+                    <div id="storage-status-notice" class="mt-1"></div>
+
+                    <div id="published-date-container" class="hidden pt-1">
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Ngày Đăng Video</label>
+                        <input id="form-published-date" name="published_date" type="date" 
+                            class="w-full sm:w-1/2 px-3.5 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none">
+                    </div>
+                </div>
+
+                <div class="space-y-2 pt-2 border-t border-slate-100">
+                    <label class="block text-xs font-bold text-slate-900">
+                        <i class="fa-solid fa-cloud-arrow-up text-blue-600 mr-1"></i> File Video đính kèm:
+                    </label>
+
+                    <div id="dropzone" class="dropzone p-5 text-center cursor-pointer hover:bg-slate-50 transition-colors">
+                        <input id="form-video-file" name="video_file" type="file" accept="video/mp4,video/quicktime,video/webm,video/x-msvideo" class="hidden">
+                        <div onclick="document.getElementById('form-video-file').click()">
+                            <i class="fa-solid fa-film text-3xl text-blue-500 mb-2"></i>
+                            <p class="text-xs font-bold text-slate-700">Kéo & thả file video vào đây hoặc <span class="text-blue-600 underline">bấm để chọn file</span></p>
+                            <p class="text-[11px] text-slate-400 mt-1">Hỗ trợ file MP4, MOV, WEBM dung lượng lớn</p>
+                        </div>
+                        <div id="file-selected-name"></div>
+                    </div>
+
+                    <div id="video-preview-info"></div>
+
+                    <div id="upload-progress-container" class="space-y-1.5 hidden">
+                        <div class="flex items-center justify-between text-[11px] font-bold text-slate-700">
+                            <span id="upload-progress-text">Đang tải video...</span>
+                        </div>
+                        <div class="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
+                            <div id="upload-progress-bar" class="bg-blue-600 h-2.5 rounded-full transition-all duration-200" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-slate-200 flex items-center justify-end gap-2.5">
+                    <button type="button" onclick="closeVideoModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 border border-slate-200">
+                        Hủy
+                    </button>
+                    <button id="btn-save-video" type="submit" class="px-5 py-2.5 rounded-xl text-xs font-black text-white bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-500/25">
+                        <i class="fa-solid fa-floppy-disk mr-1.5"></i> Lưu Video
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 3. TEAM MEMBERS & PIN MANAGEMENT MODAL (DÀNH RIÊNG CHO TƯỜNG VY) -->
+    <div id="modal-members" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-4 hidden">
+        <div class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="px-6 py-4 border-b border-purple-100 flex items-center justify-between bg-purple-50">
+                <h3 class="font-black text-sm text-purple-950 flex items-center gap-2">
+                    <i class="fa-solid fa-crown text-purple-600"></i> Quản Lý Nhân Sự & Cấp Mã PIN (Tường Vy Admin)
+                </h3>
+                <button onclick="closeMembersModal()" class="text-slate-400 hover:text-slate-700 text-lg p-1">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="p-6 space-y-5 overflow-y-auto">
+                <!-- Hướng dẫn cho Tường Vy -->
+                <div class="bg-purple-50/70 border border-purple-200 p-3.5 rounded-2xl text-xs text-purple-950 flex items-start gap-2.5">
+                    <i class="fa-solid fa-circle-info text-purple-600 text-base mt-0.5"></i>
+                    <div>
+                        <strong>Khu vực quản trị tối cao của Tường Vy:</strong> Tại đây bạn có thể xem mã PIN của từng người, đổi mã PIN, cấp PIN mới và gửi cho Sếp hoặc nhân viên để họ đăng nhập vào đúng quyền hạn của mình.
+                    </div>
+                </div>
+
+                <!-- Form Thêm Người Dùng Mới -->
+                <form onsubmit="submitAddNewMember(event)" class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
+                    <div class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                        <i class="fa-solid fa-user-plus text-blue-600"></i> Thêm Người Dùng Mới & Cài Đặt Mã PIN:
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                        <input id="new-user-name" type="text" required placeholder="Họ và tên..." 
+                            class="px-3 py-2 rounded-xl border border-slate-200 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20">
+                        
+                        <select id="new-user-role" class="px-3 py-2 rounded-xl border border-slate-200 text-xs bg-white font-bold text-slate-700 focus:outline-none">
+                            <option value="editor">🎬 Nhân viên dựng video</option>
+                            <option value="boss">👔 Sếp (Chỉ xem video)</option>
+                        </select>
+
+                        <input id="new-user-pin" type="text" required placeholder="Mã PIN riêng (VD: 8888)..." 
+                            class="px-3 py-2 rounded-xl border border-slate-200 text-xs bg-white font-mono font-bold focus:outline-none focus:ring-2 focus:ring-purple-500/20">
+                    </div>
+                    <div class="flex justify-end">
+                        <button type="submit" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-black shadow-sm">
+                            <i class="fa-solid fa-plus mr-1"></i> Thêm & Cấp Mã PIN
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Bảng Danh Sách Người Dùng & Mã PIN -->
+                <div>
+                    <h4 class="text-xs font-bold text-slate-800 mb-2 flex items-center justify-between">
+                        <span>Danh Sách Tài Khoản & Mã PIN Hiện Tại:</span>
+                        <span class="text-[11px] text-slate-400 font-normal">* Bạn có thể bấm Đổi PIN để đổi mã PIN mới ngay lập tức</span>
+                    </h4>
+                    
+                    <div class="overflow-x-auto border border-slate-200 rounded-2xl">
+                        <table class="w-full text-left text-xs">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase text-[11px]">
+                                    <th class="px-4 py-3">Tài khoản</th>
+                                    <th class="px-4 py-3">Vai trò</th>
+                                    <th class="px-4 py-3">Mã PIN hiện tại</th>
+                                    <th class="px-4 py-3 text-right">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-users-tbody" class="divide-y divide-slate-100">
+                                <!-- Populated via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="px-6 py-3 border-t border-slate-200 bg-slate-50 flex justify-end">
+                <button type="button" onclick="closeMembersModal()" class="px-5 py-2 rounded-xl text-xs font-bold text-slate-700 bg-white border border-slate-300 hover:bg-slate-100 shadow-sm">
+                    Đóng
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Widget -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 flex items-center gap-3 px-5 py-3 rounded-2xl shadow-2xl text-white transform translate-y-20 opacity-0 pointer-events-none transition-all duration-300">
+        <i id="toast-icon" class="fa-solid fa-circle-check text-xl"></i>
+        <span id="toast-message" class="text-xs font-bold">Thông báo thành công!</span>
+    </div>
+
+    <!-- App JavaScript -->
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

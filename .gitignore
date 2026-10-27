@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+*.exe
+*.log
+
+# Ignore uploaded video files from git, keep folder
+uploads/*
+!uploads/.gitkeep
