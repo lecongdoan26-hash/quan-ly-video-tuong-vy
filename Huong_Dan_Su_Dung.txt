@@ -1,0 +1,28 @@
+================================================================================
+     👑 HỆ THỐNG KHO & QUẢN LÝ VIDEO (TƯỜNG VY ADMIN) - HƯỚNG DẪN SỬ DỤNG
+================================================================================
+
+1. CÁCH KHỞI ĐỘNG TRÊN MÁY TƯỜNG VY (1-CLICK KHÔNG CẦN CÀI PYTHON):
+   - Nhấp đúp chuột trực tiếp vào file: 👉 QuanLyVideo.exe
+   - Trình duyệt web sẽ tự động mở lên giao diện phần mềm tại: http://localhost:8000
+   - Giữ cửa sổ phần mềm chạy trong khi làm việc. Khi nào hết giờ làm việc muốn tắt thì bấm dấu [X] để tắt.
+
+2. CÁCH ĐĂNG NHẬP (MÃ PIN BẢO MẬT RIÊNG CHO TỪNG NGƯỜI):
+   - Tường Vy (Admin): Mã PIN là 123456 (Toàn quyền quản trị, đổi mã PIN của người khác)
+   - Sếp (Chỉ xem):   Mã PIN là 8888   (Chỉ xem video, không sửa/xóa được)
+   - Nguyên:          Mã PIN là 1111   (Nhân viên dựng)
+   - Quý:             Mã PIN là 1112   (Nhân viên dựng)
+   - Thương:          Mã PIN là 1113   (Nhân viên dựng)
+
+3. CÁCH CHO SẾP VÀ NHÂN VIÊN VÀO XEM & UPLOAD VIDEO:
+   - Điều kiện: Tất cả mọi người cùng kết nối mạng Wi-Fi văn phòng công ty.
+   - Khi mở QuanLyVideo.exe lên, ở đầu trang web hoặc cửa sổ đen sẽ hiện dòng:
+     "Link Sếp & Mạng nội bộ (LAN): http://192.168.x.x:8000"
+   - Tường Vy chỉ cần copy đường link đó gửi qua Zalo cho Sếp và nhân viên.
+   - Sếp và nhân viên mở trên trình duyệt (máy tính hoặc điện thoại) là vào được ngay!
+
+4. DỮ LIỆU & LƯU TRỮ:
+   - Toàn bộ video mọi người tải lên sẽ được lưu TRỰC TIẾP vào thư mục "uploads" trên ổ cứng máy tính này.
+   - Dung lượng lưu trữ: Bằng chính ổ cứng máy tính (500GB - 1TB).
+   - Tuyệt đối an toàn, tắt máy bật lại không bao giờ bị mất file!
+================================================================================

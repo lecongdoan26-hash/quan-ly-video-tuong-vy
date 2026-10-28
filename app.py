@@ -18,10 +18,16 @@ from openpyxl.utils import get_column_letter
 import database
 
 # Khởi tạo thư mục
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+import sys
+if getattr(sys, "frozen", False):
+    BASE_DIR = os.path.dirname(sys.executable)
+    BUNDLE_DIR = getattr(sys, "_MEIPASS", BASE_DIR)
+else:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    BUNDLE_DIR = BASE_DIR
 UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
-STATIC_DIR = os.path.join(BASE_DIR, "static")
-TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
+STATIC_DIR = os.path.join(BUNDLE_DIR, "static") if os.path.exists(os.path.join(BUNDLE_DIR, "static")) else os.path.join(BASE_DIR, "static")
+TEMPLATES_DIR = os.path.join(BUNDLE_DIR, "templates") if os.path.exists(os.path.join(BUNDLE_DIR, "templates")) else os.path.join(BASE_DIR, "templates")
 
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(STATIC_DIR, exist_ok=True)
@@ -507,11 +513,28 @@ async def export_excel(
     )
 
 if __name__ == "__main__":
+    if sys.platform.startswith('win'):
+        try:
+            sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+            sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+        except Exception:
+            pass
+
     import uvicorn
     port = int(os.environ.get("PORT", 8000))
-    print("=" * 60)
-    print(" 🚀 ĐANG KHỞI ĐỘNG HỆ THỐNG QUẢN LÝ VIDEO")
-    print(f" 💻 Truy cập trên máy này:   http://localhost:{port}")
-    print(f" 📱 Sếp & Mạng nội bộ (LAN): http://{get_local_ip()}:{port}")
-    print("=" * 60)
-    uvicorn.run("app:app", host="0.0.0.0", port=port, reload=False)
+    ip = get_local_ip()
+    print("=" * 65)
+    print("   HE THONG KHO & QUAN LY VIDEO - TUONG VY ADMIN")
+    print("=" * 65)
+    print(f" [+] May Tuong Vy (Chu may):      http://localhost:{port}")
+    print(f" [+] Sep & Nhan vien (Wi-Fi LAN): http://{ip}:{port}")
+    print("=" * 65)
+    print(" [*] Dang tu dong mo trinh duyet web...")
+    print(" [!] Giu cua so nay mo trong khi lam viec. Bam [X] de tat.")
+    print("=" * 65)
+    import webbrowser, threading, time
+    def open_browser():
+        time.sleep(1.2)
+        webbrowser.open(f"http://localhost:{port}")
+    threading.Thread(target=open_browser, daemon=True).start()
+    uvicorn.run(app, host="0.0.0.0", port=port, reload=False)

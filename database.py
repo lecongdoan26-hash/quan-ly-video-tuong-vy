@@ -2,7 +2,14 @@ import sqlite3
 import os
 from datetime import datetime
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "video_data.db")
+import sys
+
+if getattr(sys, 'frozen', False):
+    BASE_DIR = os.path.dirname(sys.executable)
+else:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+DB_PATH = os.path.join(BASE_DIR, "video_data.db")
 
 def get_db_connection():
     conn = sqlite3.connect(DB_PATH)
@@ -67,10 +74,10 @@ def init_db():
     if cursor.fetchone()[0] == 0:
         sample_users = [
             ("Tường Vy (Admin)", "admin", "123456"),
-            ("Sếp (Giám Đốc)", "boss", "8888"),
-            ("Hoàng Nam", "editor", "1111"),
-            ("Thảo Linh", "editor", "2222"),
-            ("Minh Tuấn", "editor", "3333")
+            ("Sếp (Chỉ xem)", "boss", "8888"),
+            ("Nguyên", "editor", "1111"),
+            ("Quý", "editor", "1112"),
+            ("Thương", "editor", "1113")
         ]
         cursor.executemany("INSERT INTO users (name, role, pin) VALUES (?, ?, ?)", sample_users)
         conn.commit()
